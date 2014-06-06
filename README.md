@@ -23,3 +23,13 @@ $api->send("Name of the image", "Image link", Width, "Metadata", active);
 
 Metadata and active are optional: ``metadata`` is null by default, ``active`` is true by default.
 More methods coming soon.
+
+You can request current targets with
+```
+$array = $api->list_targets();
+```
+
+and check for duplicates related to an id
+```
+$duplicates = $api->list_dups($id);
+```
