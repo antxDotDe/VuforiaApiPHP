@@ -37,7 +37,7 @@ class VuforiaCloud {
 	}
 
 	# Build common headers for the packet
-	private function buildHeaders() {
+	private function build_headers() {
 		$sb = new SignatureBuilder();
 		$date = new DateTime("now", new DateTimeZone("GMT"));
 		$this->request->setHeader('Date', $date->format("D, d M Y H:i:s") . " GMT" );
@@ -46,7 +46,7 @@ class VuforiaCloud {
 			. $sb->tmsSignature($this->request, $this->secret));
 	}
 
-	private function buildRequestHeaders() {
+	private function build_headers_request() {
 		$sb = new SignatureBuilder();
 		$date = new DateTime("now", new DateTimeZone("GMT"));
 		$this->request->setHeader('Date', $date->format("D, d M Y H:i:s") . " GMT" );
@@ -88,7 +88,8 @@ class VuforiaCloud {
 		}
 		return false;
 	}
-	
+
+	# Get last target ID
 	public function result_get_target() {
 		if($this->result == NULL) {
 			return NULL;
@@ -97,6 +98,53 @@ class VuforiaCloud {
 		$result = json_decode($this->result_body());
 		$result_target = $result->target_id;
 		return $result_target;
+	}
+
+	# Get the tracking rating of the retrieve result (to be used after retrieve command)
+	public function retrieve_result_tracking_rating() {
+		if($this->result == NULL) {
+			return NULL;
+		}
+		return $this->result->tracking_rating;
+	}
+
+	# Get the active flag of the retrieve result (to be used after retrieve command)
+	public function retrieve_result_active_flag() {
+		if($this->result == NULL) {
+			return NULL;
+		}
+		return $this->result->active_flag;
+	}
+
+	# Get the result width of the retrieve result (to be used after retrieve command)
+	public function retrieve_result_width() {
+		if($this->result == NULL) {
+			return NULL;
+		}
+		return $this->result->width;
+	}
+
+	# Get the name of the retrieve result (to be used after retrieve command)
+	public function retrieve_result_name() {
+		if($this->result == NULL) {
+			return NULL;
+		}
+		return $this->result->name;
+	}
+
+# -------------------------------------------------------------------------- #
+# HTTP_Request2 builders                                                     #
+# -------------------------------------------------------------------------- #
+	public function init_get_request() {
+		$this->request = new HTTP_Request2();
+		$this->request->setMethod(HTTP_Request2::METHOD_GET);
+		$this->request->setConfig(array('ssl_verify_peer' => false));
+	}
+
+	public function init_post_request() {
+		$this->request = new HTTP_Request1();
+		$this->request->setMethod(HTTP_Request2::METHOD_POST);
+		$this->request->setConfig(array('ssl_verify_peer' => false));
 	}
 
 # -------------------------------------------------------------------------- #
@@ -120,13 +168,10 @@ class VuforiaCloud {
 						'active_flag' => ($active ? "true":"false"),
 						'application_metadata' => $metadata));
 		}
-		$this->request = new HTTP_Request2();
-		$this->request->setMethod(HTTP_Request2::METHOD_POST);
+		$this->init_post_request();
 		$this->request->setBody($json);
-		$this->request->setConfig(array('ssl_verify_peer' => false));
-		
 		$this->request->setURL(VuforiaCloud::URL . $requestPath);
-		$this->buildHeaders();
+		$this->build_headers();
 		
 		try {
 			$this->result = $this->request->send();
@@ -140,11 +185,9 @@ class VuforiaCloud {
 	# List targets in Vuforia Cloud
 	public function list_targets() {
 		$requestPath = "/targets";
-		$this->request = new HTTP_Request2();
-		$this->request->setMethod(HTTP_Request2::METHOD_GET);
-		$this->request->setConfig(array('ssl_verify_peer' => false));
+		$this->init_get_request();
 		$this->request->setURL(VuforiaCloud::URL . $requestPath);
-		$this->buildRequestHeaders();
+		$this->build_headers_request();
 		try {
 			$this->result = $this->request->send();
 			$resultBody = $this->result->getBody();
@@ -156,13 +199,40 @@ class VuforiaCloud {
 		}
 	}
 
-	public function get_dups($id) {
-		$requestPath = "/duplicates/$id";
-		$this->request = new HTTP_Request2();
-		$this->request->setMethod(HTTP_Request2::METHOD_GET);
-		$this->request->setConfig(array('ssl_verify_peer' => false));
+	# Retrieve a target from Vuforia cloud
+	public function retrieve($id) {
+		$requestPath = "/targets/$id";
+		$this->init_get_request();
 		$this->request->setURL(VuforiaCloud::URL . $requestPath);
-		$this->buildRequestHeaders();
+		$this->build_headers_request();
+		try {
+			$result = $this->request->send();
+			$resultBody = $result->getBody();
+			$json = json_decode($resultBody);
+			if($json->status == "success") {
+				$this->result = $json->target_record;
+				return "Success";
+				# After this function, you should use one of the following methods:
+				# * retrieve_result_name
+				# * retrieve_result_width
+				# * retrieve_result_active_flag
+				# * retrieve_result_tracking_rating
+			} else {
+				echo "<h3>Error in retrieve</h3>";
+				$this->result = NULL;
+				return "Failure";
+			}
+		} catch (HTTP_Request2_Exception $e) {
+			echo "<h2>Fatal error! HTTP_Request2_Exception</h2><p>$e</p>";
+		}
+	}
+
+	# List duplicates for $id
+	public function list_dups($id) {
+		$requestPath = "/duplicates/$id";
+		$this->init_get_request();
+		$this->request->setURL(VuforiaCloud::URL . $requestPath);
+		$this->build_headers_request();
 		try {
 			$this->result = $this->request->send();
 			$resultBody = $this->result->getBody();
@@ -176,8 +246,5 @@ class VuforiaCloud {
 	
 	
 }
-
-
-
 
 ?>

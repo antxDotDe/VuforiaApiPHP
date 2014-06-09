@@ -29,7 +29,17 @@ You can request current targets with
 $array = $api->list_targets();
 ```
 
-and check for duplicates related to an id
+To retrieve informations about a target in the cloud, use
+```
+$api->retrieve($id);
+```
+Then you can use one of the four methods:
+* ``retrieve_result_name`` to get the name
+* ``retrieve_result_width`` to get the width
+* ``retrieve_result_active_flag`` to get if the target is active
+* ``retrieve_result_tracking_rating`` to get the tracking rating (a number between 0 and 5)
+
+Check for duplicates related to an id
 ```
 $duplicates = $api->list_dups($id);
 ```
