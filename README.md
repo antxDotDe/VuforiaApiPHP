@@ -43,3 +43,13 @@ Check for duplicates related to an id
 ```
 $duplicates = $api->list_dups($id);
 ```
+
+It's possible to update targets with:
+```
+$api->update($id, "Name of the image", "Image link", Width, "Metadata", active);
+```
+
+To delete targets use:
+```
+$api->delete($id);
+```

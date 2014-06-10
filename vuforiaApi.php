@@ -142,8 +142,20 @@ class VuforiaCloud {
 	}
 
 	public function init_post_request() {
-		$this->request = new HTTP_Request1();
+		$this->request = new HTTP_Request2();
 		$this->request->setMethod(HTTP_Request2::METHOD_POST);
+		$this->request->setConfig(array('ssl_verify_peer' => false));
+	}
+
+	public function init_delete_request() {
+		$this->request = new HTTP_Request2();
+		$this->request->setMethod(HTTP_Request2::METHOD_DELETE);
+		$this->request->setConfig(array('ssl_verify_peer' => false));
+	}
+
+	public function init_put_request() {
+		$this->request = new HTTP_Request2();
+		$this->request->setMethod(HTTP_Request2::METHOD_PUT);
 		$this->request->setConfig(array('ssl_verify_peer' => false));
 	}
 
@@ -151,7 +163,7 @@ class VuforiaCloud {
 # REST request API methods                                                   #
 # -------------------------------------------------------------------------- #
 	
-	# Add a target to Vuforia Cloud
+	# Adds a target
 	public function send($name, $image_path, $width, $metadata=NULL, $active=true) {
 		$requestPath = "/targets";
 		$image = $this->getImageAsBase64($image_path);
@@ -182,7 +194,7 @@ class VuforiaCloud {
 		}
 	}
 	
-	# List targets in Vuforia Cloud
+	# Lists targets
 	public function list_targets() {
 		$requestPath = "/targets";
 		$this->init_get_request();
@@ -199,7 +211,7 @@ class VuforiaCloud {
 		}
 	}
 
-	# Retrieve a target from Vuforia cloud
+	# Retrieves a target
 	public function retrieve($id) {
 		$requestPath = "/targets/$id";
 		$this->init_get_request();
@@ -227,7 +239,56 @@ class VuforiaCloud {
 		}
 	}
 
-	# List duplicates for $id
+	# Deletes a target
+	public function delete($id) {
+		$requestPath = "/targets/$id";
+		$this->init_delete_request();
+		$this->request->setUrl(VuforiaCloud::URL . $requestPath);
+		$this->build_headers_request();
+		try {
+			$result = $this->request->send();
+			$json = json_decode($result->getBody());
+			if($json->result_code == "Success") {
+				return "Success";
+			} else {
+				return "Failure";
+			}
+		} catch (HTTP_Request2_Exception $e) {
+			return "Fatal error! HTTP_Request2_Exception";
+		}
+	}
+
+	# Updates a target
+	public function update($id, $name, $image_path, $width, $metadata=NULL, $active=true) {
+		$requestPath = "/targets/$id";
+		$image = $this->getImageAsBase64($image_path);
+		if($metadata == NULL) {
+			$json = json_encode( array ( 'width' => $width, 
+						'name' => $name, 
+						'image' => $image,
+						'active_flag' => ($active ? "true":"false") ));
+		} else {
+			$json = json_encode( array ( 'width' => $width,
+						'name' => $name,
+						'image' => $image,
+						'active_flag' => ($active ? "true":"false"),
+						'application_metadata' => $metadata));
+		}
+		$this->init_put_request();
+		$this->request->setBody($json);
+		$this->request->setURL(VuforiaCloud::URL . $requestPath);
+		$this->build_headers();
+		
+		try {
+			$this->result = $this->request->send();
+			return $this->result;
+		} catch( HTTP_Request2_Exception $e) {
+			echo "<h2>Fatal error! HTTP_Request2_Exception</h2><p>$e</p>";
+			die();
+		}
+	}
+
+	# Lists duplicates for $id
 	public function list_dups($id) {
 		$requestPath = "/duplicates/$id";
 		$this->init_get_request();
