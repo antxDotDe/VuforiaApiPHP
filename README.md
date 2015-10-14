@@ -1,7 +1,9 @@
 VuforiaApiPHP
 =============
 
-IMPORTANT NOTICE: development has been discontinued, since I switched my main project from PHP to Ruby on Rails.
+IMPORTANT NOTICE
+----------------
+Development has been discontinued, since I switched my main project from PHP to Ruby on Rails.
 I'll accept valid pull requests but I will not develop this myself anymore. Sorry for the inconvenience.
 
 Simple Vuforia Cloud API written in PHP.
